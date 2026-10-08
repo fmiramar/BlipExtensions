@@ -1,0 +1,66 @@
+class:: BlipSeries
+summary:: Finite arithmetic series of partial frequencies
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipWidth
+
+description::
+
+BlipSeries averages partials at ratios code::first + (k * spacing):: for
+code::k = 0 .. numPartials - 1::. It evaluates the arithmetic cosine series in
+constant cost and keeps independent double-precision accumulators for the
+first-partial phase and inter-partial phase.
+
+The highest ratio limits the partial count below a 0.999-Nyquist margin.
+Negative code::freq:: reverses both accumulators; zero frequency holds them.
+Negative code::first:: or code::spacing:: is clamped to zero, and
+code::spacing == 0:: is a single coincident sinusoid. Topology changes fade
+over one block. The output is peak-normalized by the retained partial count.
+
+The closest vanilla UGen is link::Classes/Blip::. With code::first = 1:: and
+code::spacing = 1:: the spectra agree, while BlipSeries also supports gapped,
+offset, and fractional-ratio series.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Fundamental frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numPartials
+Requested partial count, sampled once per block and clipped to code::1..2048::
+before alias limiting.
+
+argument:: first
+First partial ratio. Audio or control rate; values below zero become zero.
+
+argument:: spacing
+Spacing between partial ratios. Audio or control rate; values below zero
+become zero.
+
+argument:: mul
+Post-processing multiplier; it does not affect phase or limiting.
+
+argument:: add
+Post-processing offset; it does not affect phase or limiting.
+
+examples::
+
+code::
+(
+{ BlipSeries.ar(80, 24, 1, 2, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipSeries.ar(70, 32, 6, SinOsc.ar(0.1).range(0, 0.25), 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipSeries.ar(LFNoise1.kr(0.5).exprange(100, 400), LFNoise1.kr(0.5).range(1, 100), MouseX.kr(0, 5), MouseY.kr(0.5, 2.0)) ! 2 * 0.1 }.play;
+)
+::

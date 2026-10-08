@@ -1,0 +1,68 @@
+class:: BlipFB
+summary:: Finite Blip kernel with true one-sample normalized phase feedback
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipFB displaces the shared phase by the previous raw oscillator output times
+code::feedback / N::. Division by the effective harmonic count keeps the
+maximum retained-partial displacement approximately comparable as bandwidth
+changes.
+
+The previous sample is stored before language-side code::mul:: and code::add::
+are applied, so post-processing cannot alter the recursive trajectory. The
+one-sample state lives inside the native calculation loop and is independent
+of server block size. A conservative working range is approximately
+code::-2..2:: radians, but finite values are not hard-clipped.
+
+Carrier harmonics are limited before feedback. Recursive phase modulation
+creates new, potentially aliased components; dense or noise-like output at
+high feedback is not by itself numerical instability. Non-finite state is
+cleared immediately.
+
+The closest vanilla UGen is link::Classes/SinOscFB::. BlipFB applies the same
+one-sample topology to a normalized finite harmonic kernel and compensates for
+its highest retained partial.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Carrier frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Carrier harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: feedback
+Audio- or control-rate approximate maximum phase displacement in radians at
+the highest partial when the previous raw output is near one.
+
+argument:: mul
+Post-processing multiplier. It is not fed back.
+
+argument:: add
+Post-processing offset. It is not fed back.
+
+examples::
+
+code::
+(
+{ BlipFB.ar(100, 30, 0.5, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipFB.ar(70, 60, SinOsc.ar(0.1).range(-1, 2), 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipFB.ar(SinOsc.kr(0.1).exprange(100, 1000), LFNoise1.kr(0.5).range(1, 100), MouseX.kr(-0.99, 0.99)) ! 2 * 0.1 }.play;
+)
+::

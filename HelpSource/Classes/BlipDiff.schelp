@@ -1,0 +1,58 @@
+class:: BlipDiff
+summary:: Bound-normalized phase derivative of a finite Blip
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipDiff evaluates code::-sum(k * sin(k * phase)):: and divides by
+code::sum(k)::. It is antisymmetric, zero mean, and emphasizes high harmonics.
+Normalization is by a mathematical magnitude bound, so output amplitude does
+not scale with frequency.
+
+A differentiated geometric-series form gives constant cost in harmonic
+count. Near phase wrap, a power-series limit avoids cancellation. Effective
+count changes fade over one block. Only the retained carrier harmonics are
+present, and they are limited below the Nyquist safety margin.
+
+The closest vanilla UGen is link::Classes/Blip::. BlipDiff has the same
+retained harmonic locations, but their magnitudes rise in proportion to
+harmonic index and their phases are differentiated.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Requested harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipDiff.ar(100, 40, 0.1) }.play;
+)
+::
+
+code::
+(
+{ Ringz.ar(BlipDiff.ar(6, 80), 1800, 0.08) * 0.1 }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipDiff.ar(LFNoise1.kr(1).exprange(100, 800), SinOsc.kr(0.2).range(1, 100)) ! 2 * 0.1 }.play;
+)
+::

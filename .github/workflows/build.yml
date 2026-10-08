@@ -1,0 +1,152 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin:
+    name: ${{ matrix.platform }}-${{ matrix.arch }}-scsynth
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x86_64
+            generator_args: ""
+          - os: macos-14
+            platform: macos
+            arch: arm64
+            generator_args: "-DCMAKE_OSX_ARCHITECTURES=arm64"
+          - os: windows-2022
+            platform: windows
+            arch: x86_64
+            generator_args: "-A x64"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out BlipExtensions
+        uses: actions/checkout@v4
+        with:
+          path: BlipExtensions
+
+      - name: Check out SuperCollider headers
+        uses: actions/checkout@v4
+        with:
+          repository: supercollider/supercollider
+          ref: Version-3.14.1
+          path: supercollider
+          submodules: false
+
+      - name: Configure
+        shell: bash
+        run: >-
+          cmake -S BlipExtensions -B build
+          ${{ matrix.generator_args }}
+          -DSC_PATH="${{ github.workspace }}/supercollider"
+          -DCMAKE_BUILD_TYPE=Release
+          -DSCSYNTH=ON
+          -DSUPERNOVA=OFF
+          -DSTRICT=ON
+          -DBUILD_TESTING=ON
+          -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/stage"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Stage extension
+        run: cmake --install build --config Release
+
+      - name: Upload extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.repository_owner }}-BlipExtensions-0.1.0-${{ matrix.platform }}-${{ matrix.arch }}-scsynth
+          path: stage/BlipExtensions
+          if-no-files-found: error
+
+  supernova:
+    name: linux-x86_64-supernova
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out BlipExtensions
+        uses: actions/checkout@v4
+        with:
+          path: BlipExtensions
+
+      - name: Check out exact SuperCollider SDK
+        uses: actions/checkout@v4
+        with:
+          repository: supercollider/supercollider
+          ref: Version-3.14.1
+          path: supercollider
+          submodules: recursive
+
+      - name: Configure
+        run: >-
+          cmake -S BlipExtensions -B build
+          -DSC_PATH="${{ github.workspace }}/supercollider"
+          -DCMAKE_BUILD_TYPE=Release
+          -DSCSYNTH=OFF
+          -DSUPERNOVA=ON
+          -DSTRICT=ON
+          -DBUILD_TESTING=ON
+          -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/stage"
+
+      - name: Build and test
+        run: |
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure
+
+      - name: Stage extension
+        run: cmake --install build
+
+      - name: Upload extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.repository_owner }}-BlipExtensions-0.1.0-linux-x86_64-supernova
+          path: stage/BlipExtensions
+          if-no-files-found: error
+
+  sanitizers:
+    name: linux-x86_64-sanitizers
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out BlipExtensions
+        uses: actions/checkout@v4
+        with:
+          path: BlipExtensions
+
+      - name: Check out SuperCollider headers
+        uses: actions/checkout@v4
+        with:
+          repository: supercollider/supercollider
+          ref: Version-3.14.1
+          path: supercollider
+          submodules: false
+
+      - name: Configure
+        run: >-
+          cmake -S BlipExtensions -B build
+          -DSC_PATH="${{ github.workspace }}/supercollider"
+          -DCMAKE_BUILD_TYPE=Debug
+          -DSCSYNTH=OFF
+          -DSUPERNOVA=OFF
+          -DSTRICT=ON
+          -DBUILD_TESTING=ON
+          -DBLIP_EXTENSIONS_SANITIZE=ON
+
+      - name: Build and test
+        run: |
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure

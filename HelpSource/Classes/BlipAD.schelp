@@ -1,0 +1,71 @@
+class:: BlipAD
+summary:: Periodic finite-bandwidth attack-decay excitation
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipAD sends a peak-normalized finite Dirichlet impulse train, including DC,
+into two one-pole responses and subtracts them. The resulting difference has
+a fast attack lobe, a slower tail, and a smaller opposite-polarity recovery
+lobe because both one-poles have unity DC gain.
+
+Attack and decay are sampled once per block. Each is at least one sample and
+decay is forced to remain at least one sample longer than attack. Coefficients
+and a normalization derived from the discrete difference-of-exponentials
+response interpolate over the block. That gain has a unity safety ceiling
+because a low-bandwidth Dirichlet pulse can span many samples rather than
+behaving like one isolated sample. Repeated pulses overlap naturally. States
+are denormal-cleared and never dynamically normalized from the output.
+The finite excitation harmonics are limited below Nyquist; the two linear
+one-poles change their magnitudes but do not generate new sidebands.
+
+The closest vanilla building blocks are link::Classes/Blip:: and
+link::Classes/OnePole::. BlipAD combines their finite excitation and smoothing
+topologies with internal limiting and deterministic state.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Pulse repetition frequency in Hz. Audio or control rate; signed values are
+valid.
+
+argument:: numharm
+Excitation harmonic count, sampled once per block and clipped to
+code::1..2048:: before limiting.
+
+argument:: attack
+Fast one-pole time constant in seconds, sampled once per block.
+
+argument:: decay
+Slow one-pole time constant in seconds, sampled once per block and kept above
+code::attack::.
+
+argument:: mul
+Post-processing multiplier; it does not enter filter state.
+
+argument:: add
+Post-processing offset; it does not enter filter state.
+
+examples::
+
+code::
+(
+{ BlipAD.ar(8, 80, 0.002, 0.08, 0.2) }.play;
+)
+::
+
+code::
+(
+{ Ringz.ar(BlipAD.ar(5, 100, 0.001, 0.03), 1400, 0.2) * 0.1 }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipAD.ar(LFNoise1.kr(0.5).exprange(50, 400), MouseY.kr(1, 100), LFNoise1.kr(1).range(0.001, 0.1), MouseX.kr(0.01, 1.0)) ! 2 * 0.1 }.play;
+)
+::

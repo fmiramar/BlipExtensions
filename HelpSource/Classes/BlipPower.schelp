@@ -1,0 +1,68 @@
+class:: BlipPower
+summary:: Language-side power shaping of a finite Blip kernel
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipPower is a pseudo-UGen composed from link::Classes/BlipKernel:: and
+ordinary server operators. Non-finite power input is sanitized and its output
+is deterministically masked to zero. Bipolar mode evaluates
+code::sign(x) * abs(x).pow(power)::; unipolar mode evaluates
+code::abs(x).pow(power)::. A power below one broadens low-level structure, one
+is unchanged, and a power above one sharpens the aligned peak.
+
+This first release is deliberately not a native UGen: identical unoversampled
+C++ arithmetic would not improve the DSP. Power shaping is nonlinear and
+creates harmonics beyond the base kernel, which can alias. No bandlimited or
+oversampled claim is made.
+
+The closest vanilla UGen is link::Classes/Blip:: followed by ordinary
+code::abs:: and code::pow:: operators. BlipPower packages that graph with
+defined zero handling and polarity selection.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Base frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Rectangular base-kernel harmonic count, sampled once per block and limited by
+link::Classes/BlipKernel::.
+
+argument:: power
+Audio- or control-rate exponent, clipped to a positive minimum of
+code::0.001::.
+
+argument:: polarity
+Initialization-rate selector. code::0:: or code::\bipolar:: preserves sign;
+code::1:: or code::\unipolar:: returns a nonnegative signal.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipPower.ar(100, 40, 2, \bipolar, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipPower.ar(80, 60, SinOsc.ar(0.1).range(0.5, 4), \unipolar, 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipPower.ar(MouseX.kr(50, 400, 'exponential'), MouseY.kr(1, 100), SinOsc.kr(0.2).range(0.5, 3.0), \bipolar) ! 2 * 0.1 }.play;
+)
+::

@@ -1,0 +1,51 @@
+title:: BlipExtensions
+summary:: Finite-harmonic Blip transformations and pulse-shape oscillators
+categories:: Guides>BiroSCa
+related:: Classes/Blip, Classes/Pulse, Classes/SinOscFB
+
+description::
+
+BlipExtensions is an experimental BiroSCa family derived from the finite
+harmonic structure of SuperCollider's link::Classes/Blip::. It does not
+replace the core oscillator. The native implementations use double-precision
+phase, a small Nyquist margin, analytic singular limits, deterministic invalid
+input handling, and smooth topology changes.
+
+The source architecture was studied in SuperCollider's
+code::server/plugins/OscUGens.cpp::, including the historical Blip, Pulse, and
+SinOscFB implementations. The new code retains the useful finite-kernel and
+one-sample-state ideas while replacing the legacy fixed-point
+sine/cosecant-table evaluator.
+
+subsection:: Spectral structures
+
+link::Classes/BlipSeries:: places partials on an arithmetic frequency series.
+link::Classes/BlipKernel:: applies rectangular, triangular, or efficient
+cosine-power weights. link::Classes/BlipPeak:: is a nonnegative Fejér pulse.
+link::Classes/BlipDecay:: applies exponential decay, and
+link::Classes/BlipFrac:: fades the final partial continuously.
+
+subsection:: Pulse and phase structures
+
+link::Classes/BlipWidth:: separates width from harmonic count using a
+re-anchored stateful reconstruction. link::Classes/BlipAD:: filters a finite
+impulse train with two one-pole responses. link::Classes/BlipDisp:: applies
+fixed quadratic phase, while link::Classes/BlipPM:: applies a shared
+sample-accurate phase displacement.
+
+subsection:: Calculus, waveshaping, and feedback
+
+link::Classes/BlipDiff:: is a normalized phase derivative and
+link::Classes/BlipInt:: uses inverse-harmonic integration weights.
+link::Classes/BlipPower:: is a deliberately simple language-side nonlinear
+composition. link::Classes/BlipFB:: provides true one-sample normalized phase
+feedback.
+
+subsection:: Complexity and aliasing
+
+All native classes except BlipDisp and BlipInt have constant per-sample cost
+with respect to harmonic count. BlipDisp and BlipInt are intentionally O(N)
+and stop at 2048 requested harmonics. Carrier limiting cannot suppress
+sidebands created by BlipPM, nonlinear content created by BlipPower, or
+feedback products created by BlipFB.
+

@@ -1,0 +1,61 @@
+class:: BlipDecay
+summary:: Finite Blip with an exponential spectral envelope
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipDecay weights harmonic code::k:: by code::decay ** (k - 1):: and divides
+by the exact finite weight sum. Zero is a sinusoid, while one is an
+equal-amplitude finite Blip.
+
+A stable complex geometric-series evaluator handles phase zero and values very
+close to one. code::decay:: is sample accurate; an unchanged scalar value
+avoids modulation machinery outside the normal closed-form evaluation.
+Harmonic topology changes fade over one block. Retained harmonics stop below
+the Nyquist safety margin; this linear spectral weighting creates no new
+sidebands.
+
+The closest vanilla UGen is link::Classes/Blip::. BlipDecay equals it at one
+but exposes a smooth spectral continuum down to a single sinusoid.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Requested harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: decay
+Audio- or control-rate exponential ratio, clipped to code::0..1::.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipDecay.ar(100, 60, 0.8, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipDecay.ar(80, 80, SinOsc.ar(0.1).range(0, 1), 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipDecay.ar(SinOsc.kr(0.1).exprange(50, 500), MouseX.kr(1, 100), MouseY.kr(0.01, 0.99)) ! 2 * 0.1 }.play;
+)
+::

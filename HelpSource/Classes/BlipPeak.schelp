@@ -1,0 +1,67 @@
+class:: BlipPeak
+summary:: Positive Fejér pulse with optional DC removal
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipPeak squares a normalized finite sinc ratio to produce a nonnegative
+Fejér pulse with peak one. code::center:: continuously subtracts its known DC
+component and renormalizes the aligned peak.
+
+The phase-wrap limit is evaluated analytically, not by clamping a small
+denominator. Harmonics stop at the Nyquist-limited count, and topology changes
+fade over one block. Centered mode is no longer nonnegative because DC removal
+creates a small negative floor.
+
+The closest vanilla UGen is link::Classes/Blip::. Both create compact finite
+harmonic pulses, but BlipPeak uses triangular spectral magnitudes including a
+known DC term and is nonnegative before centering.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Highest requested harmonic, sampled once per block and clipped to
+code::1..2048:: before limiting.
+
+argument:: center
+Audio- or control-rate interpolation from the raw positive pulse at zero to
+the zero-mean form at one. Values are clipped to code::0..1::.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipPeak.ar(12, 80, mul: 0.2) }.play;
+)
+::
+
+code::
+(
+{ BlipPeak.ar(100, 30, 1, 0.1) }.play;
+)
+::
+
+code::
+(
+{ Ringz.ar(BlipPeak.ar(4, 80), 1200, 0.1) * 0.1 }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipPeak.ar(SinOsc.kr(0.2).exprange(50, 400), MouseY.kr(1, 100), LFNoise1.kr(0.5).range(0, 1)) ! 2 * 0.1 }.play;
+)
+::

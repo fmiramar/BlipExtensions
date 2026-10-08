@@ -1,0 +1,57 @@
+class:: BlipFrac
+summary:: Blip with a sample-continuous fractional harmonic count
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipFrac evaluates all harmonics below code::numharm:: and fades the next
+partial by the fractional remainder. Integer values match the project's
+rectangular kernel, while continuous sweeps avoid block-rate topology steps.
+
+The harmonic request and the Nyquist boundary are both sample continuous.
+During the boundary fade, a diminishing partial may lie just above the safety
+frequency, so the transition is smoother rather than mathematically
+brick-wall bandlimited. Zero frequency holds phase.
+
+The closest vanilla UGen is link::Classes/Blip::. Blip uses a discrete
+control-rate harmonic count; BlipFrac gives the final partial a continuous
+amplitude.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Audio- or control-rate fractional count, clipped to code::1..2048:: and then
+limited against Nyquist.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipFrac.ar(100, SinOsc.ar(0.1).range(1, 80), 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipFrac.ar(200, LFTri.ar(1).range(1, 20), 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipFrac.ar(LFNoise1.kr(2).exprange(50, 1000), MouseX.kr(1.0, 50.0)) ! 2 * 0.1 }.play;
+)
+::

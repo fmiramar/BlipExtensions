@@ -1,0 +1,61 @@
+class:: BlipPM
+summary:: Finite Blip kernel with sample-accurate shared phase modulation
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipPM evaluates the finite rectangular kernel at the internal carrier phase
+plus code::phase::. A shared displacement acts code::k:: times as strongly on
+harmonic code::k::, exactly as in the equivalent additive bank.
+
+The carrier accumulator never absorbs the modulation input. Large finite
+phase values are wrapped before evaluation, and deliberate input
+discontinuities can click without corrupting carrier state. The carrier
+harmonics are Nyquist-limited, but audio-rate phase modulation creates
+sidebands outside that set and is not strictly bandlimited.
+
+The closest vanilla comparison is link::Classes/PMOsc::. BlipPM modulates one
+finite harmonic kernel rather than one sinusoidal carrier, and exposes the
+phase displacement directly in radians.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Carrier frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Carrier harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: phase
+Unrestricted finite phase displacement in radians at audio or control rate.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipPM.ar(100, 40, SinOsc.ar(3) * 0.2, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipPM.ar(80, 60, SinOsc.ar(120) * 0.05, 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipPM.ar(MouseX.kr(50, 500, 'exponential'), MouseY.kr(1, 100), SinOsc.ar(100) * MouseY.kr(0, 2pi)) ! 2 * 0.1 }.play;
+)
+::

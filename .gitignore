@@ -1,0 +1,9 @@
+/build*/
+/stage/
+/dist/
+/tests/renders/
+*.wav
+*.aiff
+*.aif
+*.flac
+.DS_Store

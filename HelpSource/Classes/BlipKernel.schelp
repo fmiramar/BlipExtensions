@@ -1,0 +1,77 @@
+class:: BlipKernel
+summary:: Rectangular, triangular, or cosine-tapered finite harmonic kernel
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipKernel changes pulse shape by weighting the first code::numharm::
+harmonics. code::\rect:: uses equal weights, code::\triangle:: decreases
+weights linearly, and code::\cosine:: uses a cosine-power taper.
+
+Rectangular and triangular modes use closed forms. Cosine mode expands integer
+powers 1 through 8 into at most nine shifted finite sums; fractional
+code::curve:: values interpolate adjacent weight sets. Cost therefore does not
+grow with harmonic count. code::amount:: mixes the weights before
+renormalization and is sample accurate. Harmonic-count changes fade over one
+block. All three modes retain only harmonics below the Nyquist safety margin;
+their linear weight laws do not create new sidebands.
+
+The closest vanilla UGen is link::Classes/Blip::. Rectangular mode and
+code::amount = 0:: reproduce its equal-weight spectrum; the tapered modes
+trade a wider main pulse for lower sidelobes.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Requested harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: kernel
+Initialization-rate selector: code::\rect::, code::\triangle::, or
+code::\cosine::. Recreate the Synth to change it.
+
+argument:: amount
+Audio- or control-rate interpolation from equal weights at zero to the
+selected kernel at one. Values are clipped to code::0..1::.
+
+argument:: curve
+Cosine power, sampled once per block and clipped to code::1..8::.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipKernel.ar(90, 40, \triangle, 1, mul: 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipKernel.ar(90, 40, \cosine, 1, 4, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipKernel.ar(70, 60, \triangle, SinOsc.ar(0.1).range(0, 1), mul: 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipKernel.ar(LFNoise1.kr(1).exprange(50, 400), MouseY.kr(1, 100), \cosine, SinOsc.kr(0.5).range(0, 1), MouseX.kr(1, 8)) ! 2 * 0.1 }.play;
+)
+::

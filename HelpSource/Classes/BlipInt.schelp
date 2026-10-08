@@ -1,0 +1,60 @@
+class:: BlipInt
+summary:: Finite inverse-harmonic phase integral of a Blip
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries, Classes/BlipWidth
+
+description::
+
+BlipInt sums code::sin(k * phase) / k:: and divides by the harmonic number
+code::H_N::. The result is zero mean and broad or ramp-like. The harmonic
+number is a conservative magnitude bound rather than an empirical gain.
+
+The initial implementation is intentionally O(N). It generates harmonic phase
+with one double-precision recurrence and uses a plugin-load-time reciprocal
+table; there is no oscillator state per partial and no free-running
+integrator, so zero and negative frequency do not drift. Topology changes
+fade for one block, and the requested count stops at 2048. The retained
+harmonics are limited below Nyquist and the linear inverse weighting produces
+no additional sidebands.
+
+The closest vanilla comparison is a bandlimited link::Classes/Saw::. Both
+carry inverse-harmonic magnitudes, but BlipInt uses sine phase, finite explicit
+count, and harmonic-number bound normalization.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Requested harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: mul
+Post-processing multiplier.
+
+argument:: add
+Post-processing offset.
+
+examples::
+
+code::
+(
+{ BlipInt.ar(100, 40, 0.1) }.play;
+)
+::
+
+code::
+(
+{ RLPF.ar(BlipInt.ar(60, 80), 1200, 0.2) * 0.1 }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipInt.ar(MouseX.kr(50, 800, 'exponential'), LFNoise1.kr(1).range(1, 100)) ! 2 * 0.1 }.play;
+)
+::

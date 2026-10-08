@@ -1,0 +1,68 @@
+class:: BlipWidth
+summary:: Finite bandlimited pulse with independent width and harmonic count
+categories:: UGens>Generators>Deterministic
+related:: Guides/BlipExtensions, Classes/BlipAD, Classes/BlipDecay, Classes/BlipDiff, Classes/BlipDisp, Classes/BlipFB, Classes/BlipFrac, Classes/BlipInt, Classes/BlipKernel, Classes/BlipPM, Classes/BlipPeak, Classes/BlipPower, Classes/BlipSeries
+
+description::
+
+BlipWidth reconstructs a bipolar periodic rectangle whose harmonic
+coefficients follow code::sin(pi * k * width) / (pi * k)::. Harmonic count is
+explicit and independent of width.
+
+The implementation is informed by the two-edge BLIT structure of
+link::Classes/Pulse:: but does not inherit its free-running leaky integrator.
+It integrates closed-form derivatives with respect to phase and width,
+maintains separate old/new states during topology changes, and re-anchors to
+the exact finite series at phase wraps. Per-sample cost is constant; the
+occasional O(N) re-anchor has a bounded average cost under harmonic limiting.
+
+The zero-mean finite series is scaled by code::2 * max(width, 1 - width):: so
+its wider plateau is approximately one. Finite-series Gibbs overshoot remains
+possible. Width is clipped to a small open interval, negative frequency is
+supported, and zero frequency holds phase while width changes remain audible.
+
+The closest vanilla UGen is link::Classes/Pulse::. Pulse chooses bandwidth
+automatically; BlipWidth exposes the finite harmonic count and uses
+drift-resistant re-anchoring.
+
+classmethods::
+
+method:: ar
+
+argument:: freq
+Frequency in Hz. Audio or control rate; signed values are valid.
+
+argument:: numharm
+Requested harmonic count, sampled once per block and clipped to code::1..2048::
+before Nyquist limiting.
+
+argument:: width
+Audio- or control-rate duty ratio. Values are clipped close to, but not at,
+zero and one.
+
+argument:: mul
+Post-processing multiplier; it is outside the integrator state.
+
+argument:: add
+Post-processing offset; it is outside the integrator state.
+
+examples::
+
+code::
+(
+{ BlipWidth.ar(100, 40, 0.5, 0.1) }.play;
+)
+::
+
+code::
+(
+{ BlipWidth.ar(80, 60, SinOsc.ar(0.1).range(0.02, 0.8), 0.1) }.play;
+)
+::
+
+code::
+// Modulating all parameters for a dynamic sound
+(
+{ BlipWidth.ar(SinOsc.kr(0.2).exprange(50, 400), LFNoise1.kr(0.5).range(1, 100), LFNoise1.kr(1).range(0.1, 0.9)) ! 2 * 0.1 }.play;
+)
+::
